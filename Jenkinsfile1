@@ -25,14 +25,15 @@ node {
 
             // 🔥 Alert after SonarQube only to jio-dev
             slackSend(
-                channel: "#jio-dev",
-                color: "#439FE0",
-                message: "SonarQube scan completed for Job ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+            channel: "#jio-dev",
+            color: "#439FE0",
+            message: "SonarQube scan completed for Job ${env.JOB_NAME} #${env.BUILD_NUMBER}\n${env.BUILD_URL}"
             )
+
            slackSend(
                 channel: "#ravi",
                 color: "#439FE0",
-                message: "SonarQube scan completed for Job ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+                message: "SonarQube scan completed for Job ${env.JOB_NAME} #${env.BUILD_NUMBER}\n${env.BUILD_URL}"
             )
 
         }
@@ -62,12 +63,12 @@ node {
             slackSend(
                 channel: "#jio-project",
                 color: "#00FF00",
-                message: "🎉 Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER} completed and deployed!"
+                message: "🎉 Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}\n${env.BUILD_URL} completed and deployed!"
             )
             slackSend(
                 channel: "#ravi",
                 color: "#00FF00",
-                message: "🎉 Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER} completed and deployed!"
+                message: "🎉 Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}\n${env.BUILD_URL} completed and deployed!"
             )
 
         }
