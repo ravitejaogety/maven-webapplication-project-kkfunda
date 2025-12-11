@@ -1,0 +1,97 @@
+node {
+
+    def mavenHome = tool name: "Maven-3.9.11"
+
+    echo "git branch Name: ${env.BRANCH_NAME}"
+    echo "build number: ${env.BUILD_NUMBER}"
+
+    try {
+
+        stage('Git Checkout') {
+            notifyBuild('STARTED')
+            git branch: 'dev', url: 'https://github.com/ravitejaogety/maven-webapplication-project-kkfunda.git'
+        }
+
+        stage('Maven Compile') {
+            sh "${mavenHome}/bin/mvn compile"
+        }
+
+        stage('Build') {
+            sh "${mavenHome}/bin/mvn clean package"
+        }
+
+        stage('SonarQube Report') {
+            sh "${mavenHome}/bin/mvn sonar:sonar"
+
+            // 🔥 Alert after SonarQube only to jio-dev
+            slackSend(
+                channel: "#jio-dev",
+                color: "#439FE0",
+                message: "SonarQube scan completed for Job ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+            )
+           slackSend(
+                channel: "#ravi",
+                color: "#439FE0",
+                message: "SonarQube scan completed for Job ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+            )
+
+        }
+
+        stage('Deploy into nexus') {
+            sh "${mavenHome}/bin/mvn clean deploy"
+        }
+
+        stage('Deploy to Tomcat') {
+            sh """
+            curl -u ravi:password \
+            --upload-file /var/lib/jenkins/workspace/scripted-way-pipeline-1/target/maven-web-application.war \
+            "http://13.235.76.225:8080/manager/text/deploy?path=/maven-web-application&update=true"
+            """
+        }
+
+    } catch (e) {
+        currentBuild.result = "FAILED"
+        throw e
+
+    } finally {
+        
+        notifyBuild(currentBuild.result)
+
+        // 🔥 Only when SUCCESS — send message to #jio-project
+        if (currentBuild.result == "SUCCESS") {
+            slackSend(
+                channel: "#jio-project",
+                color: "#00FF00",
+                message: "🎉 Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER} completed and deployed!"
+            )
+            slackSend(
+                channel: "#ravi",
+                color: "#00FF00",
+                message: "🎉 Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER} completed and deployed!"
+            )
+
+        }
+    }
+}
+
+
+def notifyBuild(String buildStatus = 'STARTED') {
+  
+  buildStatus = buildStatus ?: 'SUCCESS'
+
+  def colorCode = '#FF0000'
+  def subject = "${buildStatus}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+  def summary = "${subject} (${env.BUILD_URL})"
+
+  if (buildStatus == 'STARTED') {
+    colorCode = '#FFFF00'
+  } else if (buildStatus == 'SUCCESS') {
+    colorCode = '#278EF5'
+  } 
+
+  // Existing notifications
+  slackSend (color: colorCode, message: summary, channel: '#jio-dev')
+  slackSend (color: colorCode, message: summary, channel: '#all-kkdevopsb7')
+  slackSend (color: colorCode, message: summary, channel: '#jio-project')
+  slackSend (color: colorCode, message: summary, channel: '#ravi')
+}
