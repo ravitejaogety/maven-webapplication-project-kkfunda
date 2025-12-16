@@ -40,7 +40,7 @@ pipeline {
                sh """
            curl -u ravi:password \
            --upload-file /var/lib/jenkins/workspace/ravi-declarativeway-pipeline-dev/target/maven-web-application.war \
-           "http://13.204.64.180:8080/manager/text/deploy?path=/maven-web-application&update=true"
+           "http://3.110.41.11:8080/manager/text/deploy?path=/maven-web-application&update=true"
            """
 
            }
